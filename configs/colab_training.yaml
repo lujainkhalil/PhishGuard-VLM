@@ -1,0 +1,37 @@
+# Low-VRAM / Colab-friendly overrides (use with: --training-config configs/colab_training.yaml)
+# LLaVA 7B + LoRA still needs ~12–16+ GB GPU RAM; use T4 with batch_size 1 + --use-amp.
+
+training:
+  batch_size: 1
+  epochs: 2
+  learning_rate: 2.0e-5
+  warmup_ratio: 0.03
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  scheduler_type: linear_warmup
+  log_train_metrics_each_epoch: false
+  balanced_sampling: true
+  hard_negative_oversample: 2.0
+
+loss:
+  type: bce
+  pos_weight: auto
+  focal_gamma: 2.0
+  focal_alpha: 0.25
+
+early_stopping:
+  patience: 0
+  min_delta: 0.0
+
+checkpoint:
+  save_steps: 50
+  eval_steps: 50
+  metric_for_best: f1
+
+adversarial_augmentation:
+  enabled: false
+
+wandb:
+  project: null
+  entity: null
+  run_name: null

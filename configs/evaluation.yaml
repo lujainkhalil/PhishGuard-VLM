@@ -1,0 +1,52 @@
+# Evaluation: test sets, metrics, adversarial
+
+test_sets:
+  held_out: data/processed/test
+  temporal: null
+  zero_shot_brand: null
+  tr_op: data/benchmarks/tr-op   # evaluation only
+
+metrics:
+  - accuracy
+  - precision
+  - recall
+  - f1
+  - roc_auc
+
+# Report 95% CIs; optional McNemar for model comparison
+significance:
+  bootstrap_ci: true
+  n_bootstrap: 1000
+
+efficiency:
+  n_samples_latency: 1000
+  report_percentiles: [50, 95]
+
+# Output paths for dissertation
+results:
+  output_dir: evaluation/results          # metrics JSON + predictions CSV from scripts/run_eval.py
+  tables_dir: evaluation/results/tables
+  figures_dir: evaluation/results/figures
+  error_analysis_dir: evaluation/error_analysis
+
+adversarial:
+  n_samples_per_attack: 500
+  sample_source: held_out   # or path to dedicated adversarial pool
+  output_table: evaluation/results/tables/adversarial.csv
+  attacks:
+    - html_obfuscation
+    - logo_manipulation
+    - typosquatting
+    - prompt_injection
+  # Per-attack parameters (tune for sensitivity analysis)
+  html_obfuscation:
+    level: medium   # light | medium | heavy
+  logo_manipulation:
+    level: medium   # light | medium | heavy (simulated blur/noise on full screenshot)
+    patch_dir: null   # optional path to replacement patches (not used by current runner)
+  typosquatting:
+    n_variants: 3
+    max_edit_distance: 2
+  prompt_injection:
+    placement: [start, end]
+    templates_file: configs/prompt_injection_templates.txt

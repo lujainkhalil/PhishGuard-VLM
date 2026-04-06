@@ -1,0 +1,22 @@
+[
+  {
+    "url": "https://github.com/login",
+    "final_url": "https://github.com/login",
+    "status": "ok",
+    "screenshot_path": "RELATIVE/TO/PROJECT/screenshot.png",
+    "text_path": "RELATIVE/TO/PROJECT/extracted.txt",
+    "label": "benign",
+    "hard_negative_category": "login_form",
+    "source": "hard_negative"
+  },
+  {
+    "url": "https://www.paypal.com/signin",
+    "final_url": "https://www.paypal.com/signin",
+    "status": "ok",
+    "screenshot_path": "RELATIVE/TO/PROJECT/paypal.png",
+    "text_path": "RELATIVE/TO/PROJECT/paypal.txt",
+    "label": "benign",
+    "hard_negative_category": "branded",
+    "source": "hard_negative"
+  }
+]

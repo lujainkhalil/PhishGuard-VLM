@@ -1,0 +1,16 @@
+# PhishGuard-VLM default configuration
+# Override per experiment or environment
+
+project:
+  name: phishguard-vlm
+  seed: 42
+
+paths:
+  data_root: data
+  experiments_root: experiments
+  logs_root: logs
+  checkpoints_dir: models/checkpoints
+
+logging:
+  level: INFO
+  format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"

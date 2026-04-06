@@ -1,0 +1,51 @@
+{
+  "meta": {
+    "utc_timestamp": "20260404_211913",
+    "project_root": "/Users/lujainkhalil/Projects/phishguard-vlm",
+    "python": "3.13.7",
+    "elapsed_seconds": 16.35
+  },
+  "stages": {
+    "pytest": {
+      "exit_code": 0,
+      "stdout_tail": "...........................................                              [100%]\n43 passed, 2 skipped in 9.02s\n",
+      "parsed_passed": 43,
+      "parsed_failed": 0,
+      "parsed_skipped": 2
+    },
+    "feed_fetch_openphish": {
+      "exit_code": 0,
+      "openphish_entries_reported": 300,
+      "log_tail": "2026-04-04 22:19:26 [INFO] data_pipeline.feeds.openphish: Fetching OpenPhish feed from https://openphish.com/feed.txt\n2026-04-04 22:19:26 [INFO] data_pipeline.feeds.openphish: Fetched 300 URLs from OpenPhish (300 lines)\n2026-04-04 22:19:26 [INFO] data_pipeline.feeds.utils: Wrote 300 entries to data/raw/feeds/openphish.json\n2026-04-04 22:19:26 [INFO] __main__: OpenPhish: 300 entries written to data/raw/feeds/openphish.json\n"
+    },
+    "synthetic_manifest": {
+      "error": "Unable to find a usable engine; tried using: 'pyarrow', 'fastparquet'.\nA suitable version of pyarrow or fastparquet is required for parquet support.\nTrying to import the above resulted in these errors:\n - `Import pyarrow` failed. pyarrow is required for parquet support. Use pip or conda to install the pyarrow package.\n - `Import fastparquet` failed. fastparquet is required for parquet support. Use pip or conda to install the fastparquet package."
+    },
+    "metrics_and_threshold": {
+      "synthetic_scores_n": 500,
+      "metrics_at_0p5_threshold": {
+        "accuracy": 0.676,
+        "precision": 0.7269076305220884,
+        "recall": 0.6581818181818182,
+        "f1": 0.6908396946564885,
+        "roc_auc": 0.742189898989899
+      },
+      "threshold_sweep_best_threshold": 0.23,
+      "threshold_sweep_best_f1": 0.7492447129909365,
+      "threshold_sweep_metrics_at_best": {
+        "accuracy": 0.668,
+        "precision": 0.6408268733850129,
+        "recall": 0.9018181818181819,
+        "f1": 0.7492447129909365
+      }
+    },
+    "tiny_head_train": {
+      "status": "skipped",
+      "reason": "torch not installed"
+    },
+    "vlm_eval_no_checkpoint": {
+      "skipped": true,
+      "reason": "pass --attempt-vlm-eval to run (downloads LLaVA; needs disk/GPU)"
+    }
+  }
+}

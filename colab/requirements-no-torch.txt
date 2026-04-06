@@ -1,0 +1,20 @@
+# Same as repo requirements.txt but without torch* — install CUDA wheels separately first (Colab).
+transformers>=4.36
+peft>=0.7
+accelerate>=0.25
+playwright>=1.40
+fastapi>=0.109
+uvicorn[standard]>=0.27
+requests
+aiohttp
+pandas
+pyarrow
+tqdm
+beautifulsoup4
+lxml
+pillow
+pyyaml
+wandb
+scikit-learn
+datasets
+pytest>=7.0

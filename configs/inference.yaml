@@ -1,0 +1,10 @@
+# URL inference: how strongly knowledge (brand–domain) shapes the fused verdict
+
+inference:
+  knowledge_fusion:
+    # Multiplier on the dynamic knowledge blend weight w_k (then renormalized). >1 = trust knowledge more.
+    knowledge_weight_multiplier: 1.0
+    # Upper cap on w_k after scaling (keeps the VLM from being fully overridden).
+    max_knowledge_blend_weight: 0.62
+    # Minimum retained weight on the model probability path.
+    min_model_blend_weight: 0.22

@@ -1,0 +1,43 @@
+# PhishGuard-VLM — build once, run API or any pipeline script.
+#
+# API (default CMD):
+#   docker compose up --build phishguard
+#
+# One-off pipeline steps (examples):
+#   docker compose run --rm phishguard python scripts/run_feed_fetch.py --help
+#   docker compose run --rm phishguard python scripts/run_crawl.py --help
+#   docker compose run --rm phishguard python scripts/run_preprocess.py --help
+#   docker compose run --rm phishguard python scripts/run_train.py --help
+#   docker compose run --rm phishguard python scripts/run_eval.py --help
+#   docker compose run --rm phishguard python scripts/run_inference.py https://example.com
+#   docker compose run --rm phishguard pytest tests/ -q
+#
+# Shell:
+#   docker compose run --rm phishguard bash
+
+services:
+  phishguard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: phishguard-vlm:cpu
+    working_dir: /app
+    environment:
+      PHISHGUARD_PROJECT_ROOT: /app
+      HF_HOME: /app/.cache/huggingface
+      TRANSFORMERS_CACHE: /app/.cache/huggingface
+    volumes:
+      - ./data:/app/data
+      - ./models/checkpoints:/app/models/checkpoints
+      - huggingface_cache:/app/.cache/huggingface
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+volumes:
+  huggingface_cache:

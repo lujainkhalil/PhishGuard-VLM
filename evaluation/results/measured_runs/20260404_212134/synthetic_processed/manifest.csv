@@ -1,0 +1,13 @@
+url,image_path,text_path,label,split
+https://good.example/0,images/sample_000.png,text/sample_000.txt,benign,train
+https://evil.example/1,images/sample_001.png,text/sample_001.txt,phishing,train
+https://evil.example/2,images/sample_002.png,text/sample_002.txt,phishing,validation
+https://good.example/3,images/sample_003.png,text/sample_003.txt,benign,test
+https://evil.example/4,images/sample_004.png,text/sample_004.txt,phishing,train
+https://evil.example/5,images/sample_005.png,text/sample_005.txt,phishing,train
+https://good.example/6,images/sample_006.png,text/sample_006.txt,benign,validation
+https://evil.example/7,images/sample_007.png,text/sample_007.txt,phishing,test
+https://evil.example/8,images/sample_008.png,text/sample_008.txt,phishing,train
+https://good.example/9,images/sample_009.png,text/sample_009.txt,benign,train
+https://evil.example/10,images/sample_010.png,text/sample_010.txt,phishing,validation
+https://evil.example/11,images/sample_011.png,text/sample_011.txt,phishing,test

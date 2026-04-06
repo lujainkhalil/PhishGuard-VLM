@@ -1,0 +1,28 @@
+# Git / editor
+.git
+.gitignore
+.cursor
+.idea
+.vscode
+
+# Local environments
+.venv
+venv
+env
+__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+# Large or machine-local paths (mount at runtime instead)
+data/
+models/checkpoints/
+experiments/
+logs/
+wandb/
+
+# OS
+.DS_Store
+Thumbs.db

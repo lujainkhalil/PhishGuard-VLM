@@ -1,0 +1,46 @@
+% PhishGuard-VLM — LaTeX snippets for thesis (requires booktabs; add \usepackage{url} or hyperref).
+% Replace \ldots with your measured values.
+
+\subsection*{Training run log (example)}
+\begin{table}[htbp]
+  \centering
+  \small
+  \caption{Example experiment log (one row per training run).}
+  \label{tab:exp-log}
+  \begin{tabular}{llllll}
+    \toprule
+    Run ID & Commit & Seed & Best val.\ F1 & Checkpoint & W\&B \\
+    \midrule
+    \texttt{exp-001} & \texttt{abc1234} & 42 & \ldots & \texttt{best.pt} & \ldots \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection*{Adversarial robustness}
+\begin{table}[htbp]
+  \centering
+  \caption{Clean vs.\ perturbed test performance (same subset as baseline).}
+  \label{tab:adversarial}
+  \begin{tabular}{lcccc}
+    \toprule
+    Condition & Accuracy & F1 & $\Delta$Acc & $\Delta$F1 \\
+    \midrule
+    Baseline (clean) & \ldots & \ldots & --- & --- \\
+    HTML obfuscation & \ldots & \ldots & \ldots & \ldots \\
+    Typosquatting    & \ldots & \ldots & \ldots & \ldots \\
+    Screenshot noise & \ldots & \ldots & \ldots & \ldots \\
+    Prompt injection & \ldots & \ldots & \ldots & \ldots \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% --- Prose blocks (paste into methodology / discussion) ---
+%
+% \paragraph{Multimodal detection.}
+% Phishing is addressed with a vision--language model that jointly encodes webpage screenshots and extracted text.
+%
+% \paragraph{Efficient adaptation.}
+% Low-rank adaptation of attention projections plus a compact classification head reduces trainable parameters relative to full fine-tuning.
+%
+% \paragraph{External knowledge.}
+% Optional brand--domain signals are fused with model scores using explicit agreement and conflict handling to improve interpretability and robustness to purely visual mimicry.

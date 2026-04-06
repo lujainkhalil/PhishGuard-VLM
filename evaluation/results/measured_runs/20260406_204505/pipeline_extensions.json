@@ -1,0 +1,22 @@
+{
+  "crawl_smoke": {
+    "command": "python scripts/run_crawl.py --limit 2 --batch-size 1",
+    "feeds_loaded": "openphish.json (300 URLs deduped)",
+    "urls_attempted": 2,
+    "status_ok": 0,
+    "manifest_path": "data/crawl_manifest.json",
+    "outcomes": [
+      {"url": "https://urban-window-repair-point.xyz/ja/", "status": "error", "note": "ERR_NAME_NOT_RESOLVED"},
+      {"url": "https://urlz.li/7f6b1866", "status": "timeout", "note": "30s navigation timeout after retries"}
+    ]
+  },
+  "preprocess": {
+    "skipped": true,
+    "reason": "No crawl rows with status ok; run_preprocess requires successful screenshots/text"
+  },
+  "environment_notes": {
+    "torch": "not available for Python 3.13 on this host (pip: no matching distribution); tiny_head_train and full VLM stages skipped",
+    "docker": "not installed; used host Python for measured pipeline",
+    "playwright": "installed for crawl smoke test"
+  }
+}

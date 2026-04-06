@@ -1,0 +1,58 @@
+# Training loop and W&B
+
+training:
+  batch_size: 8
+  epochs: 10
+  learning_rate: 2.0e-5
+  warmup_ratio: 0.03
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+  # Step-based LR after warmup (same total steps as epochs × batches)
+  scheduler_type: linear_warmup   # linear_warmup | cosine (cosine needs transformers)
+  # Full train pass in eval mode each epoch (slower; compares train vs val F1/acc/loss in logs + W&B)
+  log_train_metrics_each_epoch: true
+  # Class balancing: balanced_sampling (oversample minority) plus optional BCE pos_weight / focal
+  balanced_sampling: true
+  # Extra sampling weight for benign rows with manifest column hard_negative_category set (>1 = seen more often)
+  hard_negative_oversample: 2.0
+
+# Loss: BCE with optional positive-class weighting, or focal for hard examples (see models/training/losses.py)
+loss:
+  type: bce              # bce | focal
+  pos_weight: auto        # auto = n_benign/n_phishing on train split; null = unweighted BCE
+  focal_gamma: 2.0
+  focal_alpha: 0.25
+
+# Stop if metric_for_best (epoch-end validation) does not improve for `patience` epochs
+early_stopping:
+  patience: 0            # 0 = disabled
+  min_delta: 0.0           # required improvement on metric_for_best to reset patience
+
+checkpoint:
+  save_strategy: steps
+  save_steps: 500
+  eval_steps: 250
+  metric_for_best: f1
+
+# Train-time input corruption (same families as evaluation/adversarial/attacks.py). Labels unchanged.
+adversarial_augmentation:
+  enabled: false
+  base_probability: 0.35       # per-sample chance to apply any enabled corruption(s)
+  seed: 42
+  html_obfuscation:
+    enabled: true
+    probability: 0.55         # conditional on base_probability hit
+    level: medium               # light | medium | heavy
+  typosquatting:
+    enabled: true
+    probability: 0.5
+    max_edit_distance: 2
+  logo_manipulation:
+    enabled: true
+    probability: 0.45
+    level: light                # prefer light at train time for stability
+
+wandb:
+  project: phishguard-vlm
+  entity: null   # set in env or override
+  run_name: null # optional; else auto

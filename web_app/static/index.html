@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PhishGuard</title>
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --card: #fff;
+      --text: #1a1d26;
+      --muted: #5c6578;
+      --border: #e2e5eb;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --benign-bg: #ecfdf5;
+      --benign-fg: #047857;
+      --phish-bg: #fef2f2;
+      --phish-fg: #b91c1c;
+      --radius: 10px;
+      --shadow: 0 1px 3px rgba(0,0,0,.06);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--bg);
+    }
+    main {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 3rem;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.25rem;
+    }
+    .sub {
+      color: var(--muted);
+      margin: 0 0 1.5rem;
+      font-size: 0.95rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      color: var(--text);
+      background: #fafbfc;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      background: #fff;
+    }
+    button {
+      width: 100%;
+      margin-top: 0.85rem;
+      padding: 0.7rem 1rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover:not(:disabled) { background: var(--accent-hover); }
+    button:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+    #status {
+      margin-top: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+    #status.info {
+      background: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+    }
+    #status.err {
+      background: var(--phish-bg);
+      color: var(--phish-fg);
+      border: 1px solid #fecaca;
+    }
+    #out {
+      margin-top: 1.25rem;
+    }
+    #out h2 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin: 0 0 0.75rem;
+      font-weight: 600;
+    }
+    .prediction {
+      display: inline-block;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    .prediction.benign {
+      background: var(--benign-bg);
+      color: var(--benign-fg);
+    }
+    .prediction.phishing {
+      background: var(--phish-bg);
+      color: var(--phish-fg);
+    }
+    .row {
+      margin-bottom: 0.85rem;
+    }
+    .row:last-child { margin-bottom: 0; }
+    .row .k {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.2rem;
+    }
+    .row .v { font-size: 0.95rem; }
+    .explanation {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>PhishGuard</h1>
+    <p class="sub">Paste a page URL to run the classifier.</p>
+    <div class="card">
+      <form id="form" action="#" method="post">
+        <label for="url">URL</label>
+        <input
+          id="url"
+          name="url"
+          type="text"
+          autocomplete="url"
+          placeholder="https://example.com"
+          required
+        />
+        <button type="submit" id="btn">Analyze</button>
+      </form>
+      <div id="status" hidden></div>
+    </div>
+    <section id="out" class="card" hidden>
+      <h2>Result</h2>
+      <div id="pred" class="prediction"></div>
+      <div class="row">
+        <div class="k">Confidence</div>
+        <div class="v" id="conf"></div>
+      </div>
+      <div class="row">
+        <div class="k">Explanation</div>
+        <div class="v explanation" id="expl"></div>
+      </div>
+    </section>
+  </main>
+  <script>
+    (function () {
+      const form = document.getElementById("form");
+      const urlInput = document.getElementById("url");
+      const btn = document.getElementById("btn");
+      const status = document.getElementById("status");
+      const out = document.getElementById("out");
+      const pred = document.getElementById("pred");
+      const conf = document.getElementById("conf");
+      const expl = document.getElementById("expl");
+
+      function showStatus(kind, text) {
+        status.hidden = false;
+        status.className = kind;
+        status.textContent = text;
+      }
+      function hideStatus() {
+        status.hidden = true;
+        status.textContent = "";
+      }
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        hideStatus();
+        out.hidden = true;
+        const url = urlInput.value.trim();
+        if (!url) return;
+
+        btn.disabled = true;
+        showStatus("info", "Crawling and analyzing… this may take a minute.");
+
+        try {
+          const res = await fetch("/predict", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: url }),
+          });
+          const data = await res.json().catch(function () { return {}; });
+
+          if (!res.ok) {
+            let msg = res.statusText || "Request failed";
+            const d = data.detail;
+            if (d != null) {
+              msg = Array.isArray(d)
+                ? d.map(function (x) { return x.msg || JSON.stringify(x); }).join("; ")
+                : String(d);
+            }
+            showStatus("err", msg);
+            return;
+          }
+
+          hideStatus();
+          const isPhish = Number(data.label) === 1;
+          pred.textContent = isPhish ? "Phishing" : "Benign";
+          pred.className = "prediction " + (isPhish ? "phishing" : "benign");
+          const c = typeof data.confidence === "number" ? data.confidence : 0;
+          conf.textContent = (100 * c).toFixed(1) + "%";
+          expl.textContent = data.explanation || "—";
+          out.hidden = false;
+        } catch (err) {
+          showStatus("err", "Network error: " + (err && err.message ? err.message : "could not reach server"));
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

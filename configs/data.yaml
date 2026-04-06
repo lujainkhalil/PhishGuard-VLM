@@ -1,0 +1,91 @@
+# Data pipeline: feeds, crawl, preprocessing
+
+paths:
+  data_root: data
+
+feeds:
+  phishing:
+    # Full community feeds (no row cap); multiple URLs merged with URL-level dedupe.
+    openphish:
+      feed_urls:
+        - https://openphish.com/feed.txt
+        - https://raw.githubusercontent.com/openphish/public_feed/main/feed.txt
+      timeout_sec: 120
+    # Full PhishTank online-valid.json (set PHISHTANK_API_KEY for reliable access).
+    phishtank:
+      timeout_sec: 360
+    apwg: {}
+  benign:
+    # Tranco top-1M → https:// URLs, label benign (default: at least 10k rows for dataset scale).
+    tranco:
+      enabled: true
+      download_url: https://tranco-list.eu/top-1m.csv.zip
+      min_urls: 10000
+      max_urls: 100000
+      timeout_sec: 600
+
+crawl:
+  # Navigation + screenshot budget per attempt (45–60s recommended for slow sites)
+  timeout_ms: 60000
+  viewport: { width: 1920, height: 1080 }
+  # Exactly three full browser attempts per URL (timeouts/transient errors retried).
+  max_attempts: 3
+  # Pause between retry attempts (ms); helps with flaky connections.
+  retry_backoff_ms: 750
+  # Deprecated: if max_attempts omitted, attempts = max_retries + 1
+  max_retries: 2
+
+preprocessing:
+  image_size: 336    # LLaVA typical; center-pad to square PNG in data/processed/images
+  text_max_length: 2048
+  train_ratio: 0.8
+  val_ratio: 0.1
+  test_ratio: 0.1
+  # Splitting: stratified_domain = same registrable domain never spans splits (reduces leakage).
+  # temporal = per-label sort by timestamp (fetched_at, crawl_date, ...); auto picks temporal if enough rows have timestamps.
+  split_mode: stratified_domain   # stratified | stratified_domain | temporal | auto
+  split_timestamp_keys: [crawled_at, fetched_at, crawl_date, timestamp, feed_fetched_at]
+  auto_temporal_min_fraction: 0.5
+  splits_subdir: splits          # data/processed/splits/{train,validation,test}.parquet
+  # Default materialization dir = parent of manifest_path (data/processed)
+  # processed_dir: data/processed
+  # Manifest: url, text, label, image_path, screenshot_path, text_path, split, source, domain, ...
+  manifest_path: data/processed/manifest.parquet
+
+# Quality filters (drop if failed) — applied to crawl records before split/materialize
+quality:
+  min_text_length: 50
+  max_redirects: 5
+  exclude_http_errors: true
+  validate_screenshot_image: true   # PIL open + min size (removes failed/empty captures)
+  min_screenshot_bytes: 100
+  min_image_edge_px: 1
+
+# Final manifest pass after materialization (empty text, bad images, duplicates, short text)
+dataset_validation:
+  enabled: true
+  min_text_length: 50
+  min_screenshot_bytes: 100
+  min_image_edge_px: 1
+  dedupe_by_url: true
+  dedupe_by_normalized_url: true
+  write_report_json: true          # writes <manifest_stem>.dataset_validation.json next to manifest
+
+# Deduplicate by URL before split; normalized URL collapses scheme/host variants
+dedup:
+  by_url: true
+  by_normalized_url: true
+  by_content_hash: false
+
+# Hard negatives: benign pages that look like phishing (login/branded). Crawl URLs into a second
+# manifest (same JSON schema as main crawl), then enable merge below.
+hard_negatives:
+  enabled: false
+  crawl_manifest_paths:
+    - data/crawl_hard_negatives.json
+  default_category: general   # login_form | branded | phishing_lookalike | general (per-row override allowed)
+  force_train_split: true      # keep hard negatives out of val/test so they only shape the classifier
+
+# TR-OP: evaluation only, no training
+benchmarks:
+  tr_op_path: data/benchmarks/tr-op

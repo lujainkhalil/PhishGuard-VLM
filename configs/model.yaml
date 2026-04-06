@@ -1,0 +1,36 @@
+# VLM and classification head
+
+model:
+  name: llava-1.5-7b
+  revision: main
+  image_size: 336
+  freeze_vision_encoder: true
+  train_projector: true
+
+# Same at training and inference
+prompt_template: "Analyze this webpage screenshot and text. Is it phishing? Webpage text:\n{text}"
+
+lora:
+  enabled: true
+  r: 16
+  alpha: 32
+  lora_dropout: 0.05
+  # Wider attention adaptation (more capacity for layout-heavy phishing); reduce list if VRAM-limited
+  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj"]
+  # Only LoRA (+ classification head) trains by default; set true to also train the vision–language projector (more VRAM).
+  train_multi_modal_projector: false
+  gradient_checkpointing: true   # lowers activation memory; pairs with use_cache=false inside the model
+
+head:
+  hidden_size: 4096   # must match LLaVA text hidden size (backbone wins if mismatch)
+  mlp_hidden_dim: 1024
+  dropout: 0.1
+  use_layer_norm: true
+  num_classes: 1      # binary; logits -> sigmoid for phishing probability
+
+# Extra fusion before the classification head (LLaVA already fuses via self-attention over image+text tokens)
+fusion:
+  # pooled = last-token pool only (default). Others: explicit alignment + cross-attention and/or learned weights.
+  mode: pooled                    # pooled | weighted_pool | cross_attention | cross_attention_gated
+  num_heads: 8                    # cross-attention heads (embed_dim must be divisible)
+  dropout: 0.1
