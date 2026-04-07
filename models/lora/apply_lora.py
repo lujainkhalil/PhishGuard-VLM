@@ -77,6 +77,8 @@ def apply_lora_to_llava(
     inner = hf_llava.model
     language_model = getattr(inner, "language_model", None)
     if language_model is None:
+        language_model = getattr(hf_llava, "language_model", None)
+    if language_model is None:
         raise ValueError("LLaVA language_model not found")
 
     config = LoraConfig(
@@ -89,7 +91,10 @@ def apply_lora_to_llava(
         inference_mode=False,
     )
     language_model = get_peft_model(language_model, config)
-    inner.language_model = language_model
+    if hasattr(inner, "language_model"):
+        inner.language_model = language_model
+    else:
+        hf_llava.language_model = language_model
 
     if hasattr(language_model, "print_trainable_parameters"):
         language_model.print_trainable_parameters()
