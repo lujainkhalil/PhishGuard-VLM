@@ -123,7 +123,7 @@ class LLaVA15MultimodalWrapper(nn.Module):
             input_ids=input_ids,
             attention_mask=attention_mask,
             pixel_values=pixel_values,
-            output_hidden_states=need_hidden,
+            output_hidden_states=True,
             return_dict=True,
         )
 
@@ -132,7 +132,11 @@ class LLaVA15MultimodalWrapper(nn.Module):
                 raise RuntimeError("Model returned no logits; check config and inputs.")
             return outputs.logits
 
-        last_hidden = outputs.last_hidden_state
+        last_hidden = (
+            outputs.last_hidden_state
+            if hasattr(outputs, "last_hidden_state") and outputs.last_hidden_state is not None
+            else outputs.hidden_states[-1]
+        )
         if output_type == "last_hidden_state":
             return last_hidden
 
