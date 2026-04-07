@@ -42,3 +42,11 @@ wandb/
 # Evaluation outputs (optional: commit summaries)
 # evaluation/results/*.csv
 # evaluation/results/*.png
+.venv/
+.venv311/
+data/
+*.log
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
