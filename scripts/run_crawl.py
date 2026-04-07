@@ -17,17 +17,23 @@ Per-URL failures are recorded and do not stop the pipeline.
 """
 
 import argparse
-import json
 import logging
 import sys
-from datetime import datetime, timezone
+import json
 from pathlib import Path
 
 _project_root = Path(__file__).resolve().parent.parent
 if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
 
-from data_pipeline.crawler import crawl_url_with_retries
+from data_pipeline.collection.crawl_batch import execute_crawl_queue, execute_crawl_queue_parallel
+
+_project_root = Path(__file__).resolve().parent.parent
+if str(_project_root) not in sys.path:
+    sys.path.insert(0, str(_project_root))
+
+from data_pipeline.collection.crawl_batch import execute_crawl_queue
+from data_pipeline.collection.manifest_utils import load_manifest_by_url
 from data_pipeline.crawler.feed_loader import load_urls_from_feeds
 
 logging.basicConfig(
@@ -142,6 +148,12 @@ def main() -> int:
         default=None,
         help="Override config crawl.retry_backoff_ms",
     )
+    parser.add_argument(
+    "--workers",
+    type=int,
+    default=1,
+    help="Parallel crawl workers (default 1; use 5 for fast crawl)",
+)
     args = parser.parse_args()
 
     config = load_crawl_config(args.config)
@@ -182,119 +194,35 @@ def main() -> int:
 
     resume = not args.no_resume
     prior = load_manifest_by_url(args.manifest) if resume else {}
-    manifest_entries: list[dict] = []
-    ok_count = 0
-    skipped_ok = 0
-    skipped_permanent = 0
-    crawls_since_save = 0
-    batch_size = max(0, args.batch_size)
-
-    def flush_manifest() -> None:
-        write_manifest(args.manifest, manifest_entries)
-
-    for i, (url, label, source, fetched_at) in enumerate(unique):
-        prev_row = prior.get(url, {}) if resume else {}
-        if resume and prev_row.get("status") == "ok":
-            row = prev_row
-            manifest_entries.append(row)
-            skipped_ok += 1
-            if row.get("status") == "ok":
-                ok_count += 1
-            logger.info("[%d/%d] Skip (already ok): %s", i + 1, len(unique), url[:70])
-            continue
-
-        if resume and prev_row.get("permanent_failure"):
-            row = prev_row
-            manifest_entries.append(row)
-            skipped_permanent += 1
-            logger.info(
-                "[%d/%d] Skip (permanent failure, category=%s): %s",
-                i + 1,
-                len(unique),
-                prev_row.get("error_category", "?"),
-                url[:70],
-            )
-            continue
-
-        logger.info(
-            "[%d/%d] Crawling %s (timeout_ms=%d max_attempts=%d)",
-            i + 1,
-            len(unique),
-            url[:70],
-            timeout_ms,
-            max_attempts,
+    if args.workers > 1:
+        execute_crawl_queue_parallel(
+            unique,
+            prior,
+            manifest_path=args.manifest,
+            screenshots_dir=args.screenshots_dir,
+            pages_dir=args.pages_dir,
+            timeout_ms=timeout_ms,
+            viewport=viewport,
+            max_attempts=max_attempts,
+            retry_backoff_ms=retry_backoff_ms,
+            batch_size=max(0, args.batch_size),
+            resume=resume,
+            workers=args.workers,
         )
-        try:
-            result = crawl_url_with_retries(
-                url,
-                screenshot_dir=args.screenshots_dir,
-                pages_dir=args.pages_dir,
-                timeout_ms=timeout_ms,
-                viewport=viewport,
-                max_attempts=max_attempts,
-                retry_backoff_ms=retry_backoff_ms,
-                wait_until="domcontentloaded",
-                extra_wait_ms=500,
-            )
-        except Exception as e:
-            logger.exception("Unexpected error crawling %s: %s", url[:80], e)
-            result = None
-
-        crawled_at = datetime.now(timezone.utc).isoformat()
-        if result is None:
-            row = {
-                "url": url,
-                "final_url": url,
-                "status": "error",
-                "screenshot_path": None,
-                "text_path": None,
-                "label": label,
-                "source": source,
-                "error": "unexpected crawler exception",
-                "error_category": "internal",
-                "permanent_failure": False,
-                "redirect_count": 0,
-                "crawled_at": crawled_at,
-            }
-        else:
-            row = {
-                "url": result.url,
-                "final_url": result.final_url,
-                "status": result.status,
-                "screenshot_path": result.screenshot_path,
-                "text_path": result.text_path,
-                "label": label,
-                "source": source,
-                "error": result.error,
-                "error_category": result.error_category,
-                "permanent_failure": bool(result.permanent_failure),
-                "redirect_count": result.redirect_count,
-                "crawled_at": crawled_at,
-            }
-        if fetched_at:
-            row["fetched_at"] = fetched_at
-
-        manifest_entries.append(row)
-        prior[url] = row
-        if row.get("status") == "ok":
-            ok_count += 1
-
-        crawls_since_save += 1
-        if batch_size > 0 and crawls_since_save >= batch_size:
-            flush_manifest()
-            crawls_since_save = 0
-            logger.info("Checkpoint: wrote %d manifest rows to %s", len(manifest_entries), args.manifest)
-
-    flush_manifest()
-    failed = len(unique) - ok_count
-    logger.info(
-        "Crawl complete: %d ok, %d not ok, %d skipped (prior ok), %d skipped (permanent failure). Manifest: %s",
-        ok_count,
-        failed,
-        skipped_ok,
-        skipped_permanent,
-        args.manifest,
-    )
+    else:
+        execute_crawl_queue(
+            unique,
+            prior,
+            manifest_path=args.manifest,
+            screenshots_dir=args.screenshots_dir,
+            pages_dir=args.pages_dir,
+            timeout_ms=timeout_ms,
+            viewport=viewport,
+            max_attempts=max_attempts,
+            retry_backoff_ms=retry_backoff_ms,
+            batch_size=max(0, args.batch_size),
+            resume=resume,
+        )
     return 0
 
 

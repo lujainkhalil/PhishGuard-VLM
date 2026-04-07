@@ -6,6 +6,9 @@ Entrypoints for data, training, and evaluation. All accept config overrides and 
 |--------|--------|
 | `run_feed_fetch.py` | Fetch URLs from all feeds; write to `data/raw/feeds/`. |
 | `run_crawl.py` | Crawl URLs from feed output; save screenshots and DOM. |
+| `run_crawl_expand.py` | Large-scale expansion: existing `crawl_manifest.json` + feeds + `--url-file` JSON/CSV. |
+| `merge_crawl_manifests.py` | Concatenate manifests; optional `--dedupe-url` / `--dedupe-content-hash`. |
+| `validate_filter_crawl_manifest.py` | Filter crawl rows using `configs/data.yaml` (`collection` + `quality`); stats; optional `--run-preprocess`. |
 | `run_preprocess.py` | Build train/val/test from crawl output. |
 | `run_train.py` | Train model; config e.g. `configs/training.yaml`. |
 | `run_eval.py` | Run evaluation on configured test sets and write results. |

@@ -3,6 +3,16 @@
 paths:
   data_root: data
 
+# Collection / expansion: crawl manifest validation (validate_filter_crawl_manifest.py)
+# Defaults for min_* fall back to quality.* when omitted.
+collection:
+  allowed_labels: [phishing, benign]
+  # min_text_length: 50      # override quality.min_text_length
+  # min_screenshot_bytes: 100
+  # min_image_edge_px: 1      # minimum width AND height in pixels (PIL)
+  require_ok_status: true
+  validate_screenshot_image: true
+
 feeds:
   phishing:
     # Full community feeds (no row cap); multiple URLs merged with URL-level dedupe.

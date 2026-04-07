@@ -49,6 +49,25 @@ def load_urls_from_feeds(
     return entries
 
 
+def load_urls_from_file(path: str | Path) -> list[tuple[str, str, str, str | None]]:
+    """
+    Load ``(url, label, source, fetched_at)`` from a single JSON array or CSV file.
+
+    JSON rows use the same shape as feed JSON (``url``, optional ``label``, ``source``, ``fetched_at``).
+    CSV must include a ``url`` column; optional ``label``, ``source``, ``fetched_at``.
+    """
+    path = Path(path)
+    if not path.is_file():
+        logger.warning("URL source file not found: %s", path)
+        return []
+    if path.suffix.lower() == ".json":
+        return _load_json(path)
+    if path.suffix.lower() == ".csv":
+        return _load_csv(path)
+    logger.warning("Unsupported URL file type (use .json or .csv): %s", path)
+    return []
+
+
 def _coerce_fetched_at(raw: object) -> str | None:
     if isinstance(raw, str) and raw.strip():
         return raw.strip()
