@@ -40,8 +40,21 @@ def _project_root() -> Path:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     root = _project_root()
-    logger.info("Loading inference pipeline from %s", root)
-    app.state.pipeline = URLInferencePipeline.from_config(root)
+    import os
+    mock = os.environ.get("PHISHGUARD_MOCK", "0") == "1"
+    adapter = os.environ.get("PHISHGUARD_ADAPTER_PATH", "").strip()
+
+    if mock:
+        logger.warning("Running in MOCK mode")
+        from inference.api.mock_pipeline import MockInferencePipeline
+        app.state.pipeline = MockInferencePipeline()
+    elif adapter:
+        logger.info("Loading VLM adapter from %s", adapter)
+        from inference.vlm_inference import VLMInferencePipeline
+        app.state.pipeline = VLMInferencePipeline(adapter)
+    else:
+        logger.info("Loading full pipeline from %s", root)
+        app.state.pipeline = URLInferencePipeline.from_config(root)
     yield
 
 
