@@ -36,8 +36,8 @@ checkpoint:
 
 # Train-time input corruption (same families as evaluation/adversarial/attacks.py). Labels unchanged.
 adversarial_augmentation:
-  enabled: false
-  base_probability: 0.35       # per-sample chance to apply any enabled corruption(s)
+  enabled: true
+  base_probability: 0.35      # per-sample chance to apply any enabled corruption(s)
   seed: 42
   html_obfuscation:
     enabled: true
