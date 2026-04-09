@@ -45,12 +45,18 @@ class MockInferencePipeline:
             )
         
         return MockResult(
-            label=label,
-            confidence=confidence,
-            explanation=explanation,
-            final_url=url,
-            crawl_status="ok",
-            model_probability=confidence if label == 1 else 1 - confidence,
-            phishing_probability=confidence if label == 1 else 1 - confidence,
-            knowledge_used=False,
+           label=label,
+           confidence=confidence,
+           explanation=explanation,
+           final_url=url,
+           crawl_status="ok",
+           model_probability=confidence if label == 1 else 1 - confidence,
+           phishing_probability=confidence if label == 1 else 1 - confidence,
+           knowledge_used=True,
+           cross_modal_consistency=0.23 if is_phish else 0.91,
+           cross_modal={
+              "text_brands": ["PayPal"] if is_phish else [],
+              "domain_registrable": url.split("/")[2] if "://" in url else url,
+              "notes": "Brand-domain mismatch detected" if is_phish else "Consistent branding"
+              }
         )

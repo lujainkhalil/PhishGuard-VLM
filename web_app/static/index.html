@@ -177,78 +177,111 @@
         <div class="k">Confidence</div>
         <div class="v" id="conf"></div>
       </div>
+      <div class="row" id="brand-row" hidden>
+        <div class="k">Identified Brand</div>
+        <div class="v" id="brand"></div>
+      </div>
+      <div class="row" id="domain-row" hidden>
+        <div class="k">Actual Domain</div>
+        <div class="v" id="domain"></div>
+      </div>
       <div class="row">
         <div class="k">Explanation</div>
         <div class="v explanation" id="expl"></div>
+      </div>
+      <div class="row" id="cross-modal-row" hidden>
+        <div class="k">Brand Consistency Score</div>
+        <div class="v" id="cross-modal"></div>
       </div>
     </section>
   </main>
   <script>
     (function () {
-      const form = document.getElementById("form");
-      const urlInput = document.getElementById("url");
-      const btn = document.getElementById("btn");
-      const status = document.getElementById("status");
-      const out = document.getElementById("out");
-      const pred = document.getElementById("pred");
-      const conf = document.getElementById("conf");
-      const expl = document.getElementById("expl");
+  const form = document.getElementById("form");
+  const urlInput = document.getElementById("url");
+  const btn = document.getElementById("btn");
+  const status = document.getElementById("status");
+  const out = document.getElementById("out");
+  const pred = document.getElementById("pred");
+  const conf = document.getElementById("conf");
+  const expl = document.getElementById("expl");
 
-      function showStatus(kind, text) {
-        status.hidden = false;
-        status.className = kind;
-        status.textContent = text;
-      }
-      function hideStatus() {
-        status.hidden = true;
-        status.textContent = "";
-      }
+  function showStatus(kind, text) {
+    status.hidden = false;
+    status.className = kind;
+    status.textContent = text;
+  }
+  function hideStatus() {
+    status.hidden = true;
+    status.textContent = "";
+  }
 
-      form.addEventListener("submit", async function (e) {
-        e.preventDefault();
-        hideStatus();
-        out.hidden = true;
-        const url = urlInput.value.trim();
-        if (!url) return;
+  form.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    hideStatus();
+    out.hidden = true;
+    const inputUrl = urlInput.value.trim();
+    if (!inputUrl) return;
 
-        btn.disabled = true;
-        showStatus("info", "Crawling and analyzing… this may take a minute.");
+    btn.disabled = true;
+    showStatus("info", "Crawling and analyzing… this may take a minute.");
 
-        try {
-          const res = await fetch("/predict", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: url }),
-          });
-          const data = await res.json().catch(function () { return {}; });
-
-          if (!res.ok) {
-            let msg = res.statusText || "Request failed";
-            const d = data.detail;
-            if (d != null) {
-              msg = Array.isArray(d)
-                ? d.map(function (x) { return x.msg || JSON.stringify(x); }).join("; ")
-                : String(d);
-            }
-            showStatus("err", msg);
-            return;
-          }
-
-          hideStatus();
-          const isPhish = Number(data.label) === 1;
-          pred.textContent = isPhish ? "Phishing" : "Benign";
-          pred.className = "prediction " + (isPhish ? "phishing" : "benign");
-          const c = typeof data.confidence === "number" ? data.confidence : 0;
-          conf.textContent = (100 * c).toFixed(1) + "%";
-          expl.textContent = data.explanation || "—";
-          out.hidden = false;
-        } catch (err) {
-          showStatus("err", "Network error: " + (err && err.message ? err.message : "could not reach server"));
-        } finally {
-          btn.disabled = false;
-        }
+    try {
+      const res = await fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: inputUrl }),
       });
-    })();
+      const data = await res.json().catch(function () { return {}; });
+
+      if (!res.ok) {
+        let msg = res.statusText || "Request failed";
+        const d = data.detail;
+        if (d != null) {
+          msg = Array.isArray(d)
+            ? d.map(function (x) { return x.msg || JSON.stringify(x); }).join("; ")
+            : String(d);
+        }
+        showStatus("err", msg);
+        return;
+      }
+
+      hideStatus();
+      const isPhish = Number(data.label) === 1;
+      pred.textContent = isPhish ? "⚠ Phishing Detected" : "✓ Benign";
+      pred.className = "prediction " + (isPhish ? "phishing" : "benign");
+      const c = typeof data.confidence === "number" ? data.confidence : 0;
+      conf.textContent = (100 * c).toFixed(1) + "%";
+      expl.textContent = data.explanation || "—";
+
+      const cm = data.cross_modal;
+      if (cm && cm.text_brands && cm.text_brands.length > 0) {
+        document.getElementById("brand").textContent = cm.text_brands.join(", ");
+        document.getElementById("brand-row").hidden = false;
+      }
+
+      try {
+        document.getElementById("domain").textContent = new URL(inputUrl).hostname;
+        document.getElementById("domain-row").hidden = false;
+      } catch(e) {
+        document.getElementById("domain").textContent = inputUrl;
+        document.getElementById("domain-row").hidden = false;
+      }
+
+      if (typeof data.cross_modal_consistency === "number") {
+        const score = (data.cross_modal_consistency * 100).toFixed(0);
+        document.getElementById("cross-modal").textContent = score + "% alignment";
+        document.getElementById("cross-modal-row").hidden = false;
+      }
+
+      out.hidden = false;
+    } catch (err) {
+      showStatus("err", "Network error: " + (err && err.message ? err.message : "could not reach server"));
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
   </script>
 </body>
 </html>
