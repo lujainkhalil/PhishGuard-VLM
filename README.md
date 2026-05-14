@@ -1,6 +1,6 @@
 # PhishGuard-VLM
 
-Research-grade **multimodal phishing detection** using a Vision-Language Model (LLaVA 1.5) to analyze webpage screenshots and text simultaneously.
+**multimodal phishing detection** using a Vision-Language Model (LLaVA 1.5) to analyze webpage screenshots and text simultaneously.
 
 ## Overview
 
